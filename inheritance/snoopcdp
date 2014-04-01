@@ -1,0 +1,64 @@
+#!/bin/bash
+
+Interface=$1
+ 
+if [[ -z "$Interface" ]]
+then
+  echo "[FATAL]Usage $0 <interface>"
+  exit 1
+fi
+ 
+ 
+#snoopfile=$(mktemp /tmp/snoopy.XXXX)
+snoopfile=/tmp/snoopy.XXXX.$$
+snoop -d $Interface -c 1 -vv  -o $snoopfile 'dst 01:00:0c:cc:cc:cc and length > 50'
+instr=$(snoop -i $snoopfile  -x 26 | nawk -F: ' { print $2 } ' |  cut -b1-41|  sed -e 's/ //g' | nawk 'BEGIN {ORS=""} {print toupper($1)}')
+rm -f -- $snoopfile
+ 
+while  [[ -n "$instr" ]]
+do
+  typ=`echo $instr | cut -b1-4`
+  lhex=`echo $instr | cut -b5-8`
+  length=$(echo "ibase=16; $lhex*2" | bc)
+  next=$(echo "ibase=16; $lhex*2+1" | bc)
+  if [ $length -gt 8 ]
+  then
+    texthex=`echo $instr | cut -b9-$length`
+  else
+    texthex=""
+  fi
+  #  echo "$typ $lhex $texthex"
+  if [ $typ == "0001" ]
+  then
+    printf "Switchname: "
+    while  [ $texthex ]
+    do
+      charhex=`echo $texthex | cut -b1-2`
+      chardec=$(echo "ibase=16; $charhex" | bc)
+      printf "%b" `printf '\x%x' $chardec 2>/dev/null`
+      texthex=`echo $texthex | cut -b3-`
+    done
+    echo " "
+  fi
+  if [ $typ == "0003" ]
+  then
+    printf "Switchport: "
+    while  [ $texthex ]
+    do
+      charhex=`echo $texthex | cut -b1-2`
+      chardec=$(echo "ibase=16; $charhex" | bc)
+      printf "%b" `printf '\x%x' $chardec 2>/dev/null`
+      texthex=`echo $texthex | cut -b3-`
+    done
+    echo " "
+  fi
+  if [ $typ == "000A" ]
+  then
+    echo "VLAN: 0x$texthex $(echo "ibase=16; $texthex" | bc)"
+  fi
+  if [ $typ == "000B" ]
+  then
+    echo "Duplex: $texthex"
+  fi
+  instr=`echo $instr | cut -b$next-`
+done

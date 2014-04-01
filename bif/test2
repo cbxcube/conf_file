@@ -1,0 +1,6 @@
+udoCommand: /usr/bin/su - intn61	
+sudoCommand: /bin/su - intn61	
+sudoCommand: /usr/bin/su - pmintn61	
+sudoCommand: /bin/su - pmintn61	
+sudoCommand: /usr/bin/su - pmusrn61	
+sudoCommand: /bin/su - pmusrn61	

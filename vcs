@@ -1,0 +1,29 @@
+hares -add lsnr_camandba01 Netlsnr SG_camandbA01
+hares -modify lsnr_camandba01 Critical 0 
+hares -modify lsnr_camandba01 Owner oracle 
+hares -modify lsnr_camandba01 Home "/ora/product/10.2.0.4a" 
+hares -modify lsnr_camandba01 TnsAdmin "/camandba01/ora/admin/etc" 
+hares -modify lsnr_camandba01 Listener LISTENER_CAMANDBA01
+hares -modify lsnr_camandba01 MonScript "./bin/Netlsnr/LsnrTest.pl" 
+hares -modify lsnr_camandba01 AgentDebug 0 
+hares -add ora_CMA011A Oracle SG_camandbA01
+hares -modify ora_CMA011A Critical 0 
+hares -modify ora_CMA011A Sid CMA011A 
+hares -modify ora_CMA011A Owner oracle 
+hares -modify ora_CMA011A Home "/ora/product/10.2.0.4a" 
+hares -modify ora_CMA011A Pfile "/camandba01/ora/admin/CMA011A/pfile/initCMA011A.ora" 
+hares -modify ora_CMA011A MonScript "./bin/Oracle/SqlTest.pl" 
+hares -modify ora_CMA011A StartUpOpt STARTUP 
+hares -modify ora_CMA011A ShutDownOpt IMMEDIATE 
+hares -modify ora_CMA011A AutoEndBkup 1 
+hares -modify ora_CMA011A AgentDebug 0
+
+
+hares -add mqconn_QN02SBBQM1_SNS965_Retry MQConn SG_mqmN02
+hares -modify mqconn_QN02SBBQM1_SNS965_Retry Critical 0
+hares -modify mqconn_QN02SBBQM1_SNS965_Retry  User  mqconn02
+hares -modify mqconn_QN02SBBQM1_SNS965_Retry  Directory  /apps/home/mqconn02/QN02SNSConnector/Retry 
+hares -modify mqconn_QN02SBBQM1_SNS965_Retry  ctrl_script  runMQConn_QN02SBBQM1_SNS965_Retry
+hares -link mqconn_QN02SBBQM1_SNS965_Retry  mnt_apps-N02-mqmconnectors 
+hares -modify mqconn_QN02SBBQM1_SNS965_Retry  Enabled  1 
+hares -online mqconn_QN02SBBQM1_SNS965_Retry 
