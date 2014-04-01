@@ -1,0 +1,125 @@
+#!/bin/sh
+
+#set -o vi
+
+export SYMCLI_FULL_PDEVNAME=1
+
+export PYTHONPATH=~kab21/opt/python-2.7.2/lib/python2.7:~kab21/dev/libs/pexpect-2.4/:~kab21/dev/libs:~kab21/dev/libs/ldap
+if type vim > /dev/null 2>&1; then
+  export EDITOR=vim
+  export VISUAL=vim
+  export FCEDIT=vim
+  alias vi=vim
+else
+  export EDITOR=vi
+  export VISUAL=vi
+  export FCEDIT=vi
+  alias vim=vi
+fi
+
+if [ `uname` = SunOS ]; then
+  alias ups='/usr/ucb/ps auxwww'
+  alias awk=nawk
+  export AWK=nawk
+else
+  alias ups='ps auxwww'
+  export AWK=awk
+fi
+
+alias rm='rm -f'
+alias mv='mv -f'
+alias cp='cp -f'
+
+alias vcslog='less /var/VRTSvcs/log/engine_A.log'
+function ng
+{
+  # TODO: make this work on Solaris
+  # TODO: add option to show description and authoriser
+  for usr in $(getent netgroup $1 | sed -e 's/(/\
+/g' -e 's/ , //g' -e 's/, bskyb.com)//g' | sed 1d)
+  do
+    getent passwd $usr | $AWK -F: '{printf "%8s  %s\n", $1, $5}'
+  done
+  unset usr
+}
+
+
+if type dircolors > /dev/null 2>&1; then
+  eval `dircolors ~kab21/conf_file/.ls_colors`
+fi
+#alias ls='ls --color'
+if [ "z" != "z$TMUX" ]
+then
+  function ssh_tmux
+  {
+    tmux rename-window $1
+    ssh -q "$@"
+    tmux rename-window `hostname`
+  }
+  alias ssh='ssh_tmux'
+else
+  alias ssh='ssh -q'
+fi
+
+alias root='sudo su - root -c "/usr/bin/env ENV=~kab21/.kshrc ksh -o vi"'
+
+function hostlocation
+{
+  hostname=${1:-`hostname`}
+  long_name=$(nslookup -q=txt $hostname | $AWK -F= '/text/ {print $NF}' | sed 's/-pub"/-rib/')
+  code=$(echo $long_name | cut -c2,3)
+  $AWK -F: -v "code=$code" '$1 == code {print $3}' /share/bbscripts/PRD/Host/Redhat/Deploy/WhatAmI/LocationMatrix
+  echo $long_name
+  unset hostname long_name code
+}
+alias hostl=hostlocation
+
+function hw
+{
+  case $(uname) in
+    SunOS)
+        /usr/platform/$(uname -i)/sbin/prtdiag | sed -n "1s/^.*$(uname -m) //; 1p"
+      ;;
+    Linux)
+        dmi=$(sudo dmidecode)
+        manufacturer=$(echo "$dmi" | grep 'Manufacturer:' | head -1 | sed 's/^.*Manufacturer: //')
+        product=$(echo "$dmi" | grep 'Product Name:' | head -1 | sed 's/^.*Product Name: //')
+        echo "$manufacturer $product"
+        unset dmi manufacturer product
+      ;;
+    OpenBSD)
+        sysctl hw.model | awk -F= '{print $2}'
+      ;;
+    *)
+      echo "Not implemented" && return 1
+  esac
+}
+
+## following section required to make tmux work with ssh-agent persistently
+if [  -z "$TMUX" ]; then
+    # we're not in a tmux session
+
+    if [ ! -z "$SSH_TTY" ]; then
+        # We logged in via SSH
+
+        # if ssh auth variable is missing
+        if [ -z "$SSH_AUTH_SOCK" ]; then
+            export SSH_AUTH_SOCK="$HOME/.ssh/.auth_socket"
+        fi
+
+        # if socket is available create the new auth session
+        if [ ! -S "$SSH_AUTH_SOCK" ]; then
+            `ssh-agent -a $SSH_AUTH_SOCK` > /dev/null 2>&1
+            echo $SSH_AGENT_PID > $HOME/.ssh/.auth_pid
+        fi
+
+        # if agent isn't defined, recreate it from pid file
+        if [ -z $SSH_AGENT_PID ]; then
+            export SSH_AGENT_PID=`cat $HOME/.ssh/.auth_pid`
+        fi
+
+        # Add all default keys to ssh auth
+        ssh-add 2>/dev/null
+
+    fi
+fi
