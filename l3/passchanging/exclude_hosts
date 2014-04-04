@@ -1,0 +1,22 @@
+## IMP servers
+.*.imp.bskyb.com
+.*.id.bskyb.com
+
+## OBU zones
+.*.nmpdmz.bskyb.com
+.*.nmsdmz.bskyb.com
+.*.oogway.bskyb.com
+chi-..-nimbus-.-...-...
+
+## OCP supported servers
+chiocs.*
+chiocp.*
+chiepp.*
+chi-pc.*
+chiclepp.*
+
+## IOD hosts that born and burn after some time
+.*iod.*
+
+## NOP
+chisc.*
